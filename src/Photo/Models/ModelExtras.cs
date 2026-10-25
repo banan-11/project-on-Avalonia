@@ -3,7 +3,7 @@
 public partial class User
 {
     // ФИО одной строкой. Trim убирает пробел в конце, если отчества нет.
-    public string FullName => $"{LastName} {Name}".Trim();
+    public string FullName => $"{LastName} {Name}".Trim();s
 
     // ToString решает, как объект выглядит в ComboBox и ListBox.
     public override string ToString() => $"{Login} — {FullName}";
