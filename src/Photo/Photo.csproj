@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+	  
+	  <!-- Автоматическое подключение базовых библиотек C#, чтобы не писать using в каждом файле -->
+	  <ImplicitUsings>enable</ImplicitUsings>
+
+	  <!-- Имя выходного .exe файла и корневое пространство имен (УКАЖИТЕ СВОЕ ИМЯ ПРОЕКТА!) -->
+	  <AssemblyName>Photo</AssemblyName>
+	  <RootNamespace>Photo</RootNamespace>
+
+	  <!-- Подключение иконки приложения. ВАЖНО: прежде чем добавлять эту строку, обязательно положите файл app.ico в папку Assets, иначе проект не скомпилируется! -->
+	  <ApplicationIcon>Assets/mainPhoto.ico</ApplicationIcon>
+
+	  <!-- Отключение строгих привязок для совместимости с классическим Binding -->
+	  <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+	  
+  </PropertyGroup>
+
+	
+	
+	
+	
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+
+	  <!-- EntityFrameworkCore -->
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.12" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+		  <PrivateAssets>all</PrivateAssets> 
+	  </PackageReference>
+	  <!-- EntityFrameworkCore -->
+  </ItemGroup>
+
+	
+	
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<!-- Рисунки и иконки упаковываются внутрь скомпилированного приложения -->
+		<AvaloniaResource Include="Assets\**" />
+
+		<!-- Файл с настройками подключения копируется в папку готовой программы. Это позволит менять строку подключения без перекомпиляции кода. -->
+		<None Update="connection.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
+
+</Project>
