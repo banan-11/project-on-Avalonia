@@ -5,9 +5,10 @@ using Photo.Models;
 
 namespace Photo.Data;
 
-public partial class CollegeContext : DbContext
+public partial class PhotoContext : DbContext
 {
-    public CollegeContext(DbContextOptions<CollegeContext> options): base(options)
+    public PhotoContext(DbContextOptions<PhotoContext> options)
+        : base(options)
     {
     }
 
@@ -27,7 +28,7 @@ public partial class CollegeContext : DbContext
     {
         modelBuilder.Entity<Hall>(entity =>
         {
-            entity.HasKey(e => e.HallId).HasName("PK__Halls__A63DE8CF32ED47E7");
+            entity.HasKey(e => e.HallId).HasName("PK__Halls__A63DE8CF56447091");
 
             entity.Property(e => e.HallId).HasColumnName("hall_id");
             entity.Property(e => e.EquipmentDescription).HasColumnName("equipment_description");
@@ -41,7 +42,7 @@ public partial class CollegeContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__4659622980C4D28F");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__46596229A33BA9CB");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.BookingDate).HasColumnName("booking_date");
@@ -60,27 +61,27 @@ public partial class CollegeContext : DbContext
             entity.HasOne(d => d.Hall).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.HallId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__hall_id__42E1EEFE");
+                .HasConstraintName("FK__Orders__hall_id__662B2B3B");
 
             entity.HasOne(d => d.Photographer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.PhotographerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__photogra__43D61337");
+                .HasConstraintName("FK__Orders__photogra__671F4F74");
 
             entity.HasOne(d => d.Status).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__status_i__40058253");
+                .HasConstraintName("FK__Orders__status_i__634EBE90");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__user_id__41EDCAC5");
+                .HasConstraintName("FK__Orders__user_id__65370702");
         });
 
         modelBuilder.Entity<Photographer>(entity =>
         {
-            entity.HasKey(e => e.PhotographerId).HasName("PK__Photogra__1C0EB3EFFAA7F5F8");
+            entity.HasKey(e => e.PhotographerId).HasName("PK__Photogra__1C0EB3EFD131828E");
 
             entity.Property(e => e.PhotographerId).HasColumnName("photographer_id");
             entity.Property(e => e.Price).HasColumnName("price");
@@ -89,14 +90,14 @@ public partial class CollegeContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Photographers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Photograp__user___3493CFA7");
+                .HasConstraintName("FK__Photograp__user___57DD0BE4");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Roles__760965CC613E23FC");
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__760965CC3AA27C25");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Roles__783254B1A52CAA8F").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Roles__783254B19D0E2508").IsUnique();
 
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.RoleName)
@@ -106,7 +107,7 @@ public partial class CollegeContext : DbContext
 
         modelBuilder.Entity<Status>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__status__3683B531A700F2CC");
+            entity.HasKey(e => e.StatusId).HasName("PK__status__3683B531A86948E4");
 
             entity.ToTable("status");
 
@@ -119,9 +120,9 @@ public partial class CollegeContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F4A0BE447");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370FC742DD5E");
 
-            entity.HasIndex(e => e.Login, "UQ__Users__7838F27251CCFA9B").IsUnique();
+            entity.HasIndex(e => e.Login, "UQ__Users__7838F272A7524F38").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Email)
@@ -145,7 +146,7 @@ public partial class CollegeContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Users__role_id__31B762FC");
+                .HasConstraintName("FK__Users__role_id__55009F39");
         });
 
         OnModelCreatingPartial(modelBuilder);

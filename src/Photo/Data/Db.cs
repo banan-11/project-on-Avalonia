@@ -11,7 +11,7 @@ namespace Photo.Data
     public static class Db
     {
 
-        public static CollegeContext Create()
+        public static PhotoContext Create()
         {
             // connection.txt копируется рядом с .exe (настройка в .csproj, раздел 2.2).
             string path = Path.Combine(AppContext.BaseDirectory, "connection.txt");
@@ -20,10 +20,10 @@ namespace Photo.Data
             string connection = File.ReadAllText(path).Trim();
 
             // Говорим EF Core: работаем с SQL Server по этой строке подключения.
-            var options = new DbContextOptionsBuilder<CollegeContext>().UseSqlServer(connection).Options;
+            var options = new DbContextOptionsBuilder<PhotoContext>().UseSqlServer(connection).Options;
 
             // Контекст — объект, через который читаем и меняем таблицы БД.
-            return new CollegeContext(options);
+            return new PhotoContext(options);
         }
 
 
