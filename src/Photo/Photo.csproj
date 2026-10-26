@@ -42,12 +42,6 @@
 	  <!-- EntityFrameworkCore -->
   </ItemGroup>
 
-	
-	
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 
 	<ItemGroup>
 		<!-- Рисунки и иконки упаковываются внутрь скомпилированного приложения -->
