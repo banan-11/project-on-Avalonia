@@ -5,5 +5,38 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.CourseView"
              Tag="Услуга и оформление заказа">
-  Welcome to Avalonia!
+  
+            <!-- ScrollViewer добавляет прокрутку, если содержимое не помещается в окно. -->
+        <ScrollViewer>
+            <StackPanel Spacing="10" MaxWidth="700" HorizontalAlignment="Left">
+                <!-- Сведения об услуге: заполняются из C#. -->
+                <TextBlock x:Name="NameText" Classes="heading" />
+                <Image x:Name="CourseImage" Height="150" HorizontalAlignment="Left"
+                       Stretch="Uniform" />
+                <TextBlock x:Name="DescriptionText" />
+                <TextBlock x:Name="PriceText" FontWeight="Bold" />
+                <!-- Выбор потока: только потоки со свободными местами. -->
+                <TextBlock Text="Учебный поток:" />
+                <ComboBox x:Name="VariantBox" MinWidth="500" />
+                <!-- Количество мест: обычное поле ввода, проверяем в C#. -->
+                <TextBlock Text="Количество мест:" />
+                <TextBox x:Name="QuantityBox" Text="1" Width="160" HorizontalAlignment="Left" />
+                <!-- Выбор клиента: панель видна только методисту и администратору. -->
+                <StackPanel x:Name="ClientPanel" Spacing="6">
+                    <TextBlock Text="Клиент, для которого оформляется заказ:" />
+                    <ComboBox x:Name="ClientBox" MinWidth="580" />
+                </StackPanel>
+                <TextBlock Text="Заказ сохранится только после нажатия «Оформить»." />
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="SaveButton" Content="Оформить" Classes="accent"
+                            Click="SaveClick" />
+                    <Button Content="Обновить карточку" Click="ReloadClick" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+
+
+
+
 </UserControl>
