@@ -5,5 +5,50 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.OrderDetailsView"
              Tag="Состав заказа">
-  Welcome to Avalonia!
+ 
+
+        <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Spacing="10">
+            <!-- Сведения о заказе: заполняются из C#. -->
+            <TextBlock x:Name="HeaderText" Classes="heading" />
+            <TextBlock x:Name="ClientText" />
+            <TextBlock x:Name="DateText" />
+            <TextBlock x:Name="TotalText" FontWeight="Bold" />
+            <!-- Кнопки для методиста и администратора. -->
+            <StackPanel Orientation="Horizontal">
+                <Button Content="Удалить весь заказ" Click="DeleteOrderClick" />
+                <Button Content="Обновить" Click="ReloadClick" />
+            </StackPanel>
+            <!-- Панель администратора: скрывается из C# для остальных ролей. -->
+            <StackPanel x:Name="AdminPanel" Orientation="Horizontal" Spacing="6">
+                <CalendarDatePicker x:Name="DateBox" Width="180" />
+                <Button Content="Сохранить дату" Click="SaveDateClick" />
+                <Button Content="Удалить выбранную позицию" Click="DeleteItemClick" />
+            </StackPanel>
+            <!-- Подтверждение удаления. IsVisible="False" — сначала скрыто. -->
+            <Border x:Name="ConfirmPanel" IsVisible="False" Padding="10"
+                    Background="{StaticResource LowStockBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Name="ConfirmText" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Да, удалить" Click="ConfirmClick" />
+                        <Button Content="Отмена" Click="CancelClick" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="Позиции заказа:" />
+        </StackPanel>
+        <!-- Позиции показываются текстом из OrderItem.ToString() (ModelExtras.cs). -->
+        <ListBox x:Name="ItemsList" />
+    </DockPanel>
+
+
+
+
+
+
+
+
+
+
 </UserControl>
