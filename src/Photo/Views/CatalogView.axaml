@@ -5,5 +5,64 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.CatalogView"
              Tag="Каталог доступных залов">
-  Welcome to Avalonia!
+  
+        <DockPanel>
+         <!-- Верхняя часть: заголовок, поиск, категория, сортировка, счётчик. -->
+         <StackPanel DockPanel.Dock="Top" Spacing="8">
+             <TextBlock Classes="heading" Text="Каталог образовательных услуг" />
+             <!-- TextChanged срабатывает при каждом изменении текста. -->
+             <TextBox x:Name="SearchBox" PlaceholderText="Поиск по названию или коду"
+                      TextChanged="SearchChanged" />
+             <!-- Grid из трёх столбцов: категория (*), сортировка (250), кнопка (Auto). -->
+             <Grid ColumnDefinitions="*,250,Auto" Margin="0,0,0,8">
+                 <ComboBox x:Name="CategoryBox" HorizontalAlignment="Stretch"
+                           SelectionChanged="FilterChanged" />
+                 <ComboBox x:Name="SortBox" Grid.Column="1" HorizontalAlignment="Stretch"
+                           SelectionChanged="FilterChanged">
+                     <ComboBoxItem Content="Цена по возрастанию" />  <!-- индекс 0 -->
+                     <ComboBoxItem Content="Цена по убыванию" />     <!-- индекс 1 -->
+                 </ComboBox>
+                 <Button Grid.Column="2" Content="Обновить" Click="ReloadClick" />
+             </Grid>
+             <TextBlock x:Name="CountText" />
+         </StackPanel>
+         <!-- Список карточек. ItemsSource заполняется из C# объектами CourseCard. -->
+         <ListBox x:Name="CardsList" SelectionChanged="CardSelected">
+             <ListBox.ItemTemplate>
+                 <!-- DataTemplate — как выглядит ОДНА карточка.
+                      {Binding Name} = «возьми свойство Name у CourseCard этой строки». -->
+                 <DataTemplate>
+                     <Border Background="{Binding Background}" Padding="12" Margin="0,4">
+                         <Grid ColumnDefinitions="150,*,140">
+                             <Image Source="{Binding Image}" Width="140" Height="120"
+                                    Stretch="Uniform" />
+                             <StackPanel Grid.Column="1" Spacing="4" Margin="12,0">
+                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                 <TextBlock Text="{Binding Department}" />
+                                 <TextBlock Text="{Binding Category}" />
+                                 <TextBlock Text="{Binding SeatsText}" />
+                                 <TextBlock Text="{Binding Content}" />
+                             </StackPanel>
+                             <TextBlock Grid.Column="2" Text="{Binding PriceText}"
+                                        FontWeight="Bold" VerticalAlignment="Center" />
+                         </Grid>
+                     </Border>
+                 </DataTemplate>
+             </ListBox.ItemTemplate>
+         </ListBox>
+     </DockPanel>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </UserControl>

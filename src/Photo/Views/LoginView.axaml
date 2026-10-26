@@ -5,5 +5,23 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.LoginView"
              Tag="Вход">
-  Welcome to Avalonia!
+  
+
+        <!-- StackPanel ставит элементы друг под другом; Spacing — расстояние между ними. -->
+     <StackPanel Spacing="16" MaxWidth="650" HorizontalAlignment="Left">
+         <TextBlock Classes="heading" Text="Вход в систему" />
+         <TextBlock Text="Выберите пользователя. Пароль в учебном примере не используется." />
+
+         <!-- Выпадающий список пользователей. Заполняется из C# (ItemsSource). -->
+         <ComboBox x:Name="UsersBox" MinWidth="580" PlaceholderText="Выберите логин" />
+
+         <StackPanel Orientation="Horizontal">
+             <Button Content="Войти" Classes="accent" Click="LoginClick" />
+             <Button Content="Войти как гость" Click="GuestClick" />
+             <Button Content="Обновить список" Click="ReloadClick" />
+         </StackPanel>
+     </StackPanel>
+
+
+
 </UserControl>
