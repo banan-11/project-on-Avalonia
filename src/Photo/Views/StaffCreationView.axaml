@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Photo.Views.StaffCreationView"
+             Tag="Новый сотрудник">
+
+    <ScrollViewer>
+        <StackPanel Spacing="12" MaxWidth="500" HorizontalAlignment="Center" Margin="20">
+            <TextBlock Classes="heading" Text="Регистрация сотрудника" />
+            <TextBlock Text="Заполните данные нового фотографа или администратора." Opacity="0.7"/>
+
+            <ComboBox x:Name="RoleSelect" PlaceholderText="Кого добавляем?" SelectionChanged="RoleChanged">
+                <ComboBoxItem Content="Фотограф" Tag="Фотограф" />
+                <ComboBoxItem Content="Администратор" Tag="Администратор" />
+            </ComboBox>
+
+            <TextBox x:Name="StaffLogin" PlaceholderText="Логин" />
+            <TextBox x:Name="StaffPass" PlaceholderText="Пароль" PasswordChar="*" />
+            <TextBox x:Name="StaffFirst" PlaceholderText="Имя" />
+            <TextBox x:Name="StaffLast" PlaceholderText="Фамилия" />
+            <TextBox x:Name="StaffPhone" PlaceholderText="Телефон (цифры)" />
+            <TextBox x:Name="StaffEmail" PlaceholderText="Email" />
+
+            <!-- Поле цены видно только для Фотографа -->
+            <StackPanel x:Name="PricePanel" Spacing="5" IsVisible="False">
+                <TextBlock Text="Стоимость часа услуг фотографа:"/>
+                <NumericUpDown x:Name="StaffPrice" Minimum="0" Increment="100" Value="2000" FormatString="N0"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                <Button Content="Сохранить" Classes="accent" Click="SaveClick" Width="150"/>
+                <Button Content="Отмена" Click="CancelClick" Width="100"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

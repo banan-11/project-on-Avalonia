@@ -28,7 +28,7 @@ public partial class PhotoContext : DbContext
     {
         modelBuilder.Entity<Hall>(entity =>
         {
-            entity.HasKey(e => e.HallId).HasName("PK__Halls__A63DE8CF56447091");
+            entity.HasKey(e => e.HallId).HasName("PK__Halls__A63DE8CFBD9DC351");
 
             entity.Property(e => e.HallId).HasColumnName("hall_id");
             entity.Property(e => e.EquipmentDescription).HasColumnName("equipment_description");
@@ -42,7 +42,7 @@ public partial class PhotoContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__46596229A33BA9CB");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__465962296065B875");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.BookingDate).HasColumnName("booking_date");
@@ -61,27 +61,27 @@ public partial class PhotoContext : DbContext
             entity.HasOne(d => d.Hall).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.HallId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__hall_id__662B2B3B");
+                .HasConstraintName("FK__Orders__hall_id__619B8048");
 
             entity.HasOne(d => d.Photographer).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.PhotographerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__photogra__671F4F74");
+                .HasConstraintName("FK__Orders__photogra__628FA481");
 
             entity.HasOne(d => d.Status).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__status_i__634EBE90");
+                .HasConstraintName("FK__Orders__status_i__5EBF139D");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orders__user_id__65370702");
+                .HasConstraintName("FK__Orders__user_id__60A75C0F");
         });
 
         modelBuilder.Entity<Photographer>(entity =>
         {
-            entity.HasKey(e => e.PhotographerId).HasName("PK__Photogra__1C0EB3EFD131828E");
+            entity.HasKey(e => e.PhotographerId).HasName("PK__Photogra__1C0EB3EF2575D16A");
 
             entity.Property(e => e.PhotographerId).HasColumnName("photographer_id");
             entity.Property(e => e.Price).HasColumnName("price");
@@ -90,14 +90,14 @@ public partial class PhotoContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Photographers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Photograp__user___57DD0BE4");
+                .HasConstraintName("FK__Photograp__user___534D60F1");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Roles__760965CC3AA27C25");
+            entity.HasKey(e => e.RoleId).HasName("PK__Roles__760965CC9929BB1B");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Roles__783254B19D0E2508").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Roles__783254B163FC122A").IsUnique();
 
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.RoleName)
@@ -107,7 +107,7 @@ public partial class PhotoContext : DbContext
 
         modelBuilder.Entity<Status>(entity =>
         {
-            entity.HasKey(e => e.StatusId).HasName("PK__status__3683B531A86948E4");
+            entity.HasKey(e => e.StatusId).HasName("PK__status__3683B5311778B62C");
 
             entity.ToTable("status");
 
@@ -120,9 +120,9 @@ public partial class PhotoContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370FC742DD5E");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F11C5EDFA");
 
-            entity.HasIndex(e => e.Login, "UQ__Users__7838F272A7524F38").IsUnique();
+            entity.HasIndex(e => e.Login, "UQ__Users__7838F272483C5868").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Email)
@@ -146,7 +146,7 @@ public partial class PhotoContext : DbContext
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Users__role_id__55009F39");
+                .HasConstraintName("FK__Users__role_id__5070F446");
         });
 
         OnModelCreatingPartial(modelBuilder);

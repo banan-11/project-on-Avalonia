@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Photo.Views.HallsManagementView"
+             Tag="Управление залами">
+
+    <DockPanel Margin="20" Background="#F3F4F6">
+        
+        <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="Управление залами" FontSize="24" FontWeight="Bold"/>
+                <Button Content=" Добавить зал" Click="AddHallClick" Background="#10B981" Foreground="White" CornerRadius="6" Padding="10,5"/>
+            </StackPanel>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="300,*">
+            <!-- Список залов слева -->
+            <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="10" Margin="0,0,10,0">
+                <ListBox x:Name="HallsList" SelectionChanged="HallSelected">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Spacing="4" Margin="5">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding EquipmentDescription}" FontSize="12" Foreground="#666" TextWrapping="Wrap" MaxLines="2"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Форма редактирования справа -->
+            <Border Grid.Column="1" Background="White" CornerRadius="12" Padding="20">
+                <StackPanel Spacing="15" IsEnabled="{Binding HallsList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}, ElementName=HallsList, Mode=OneWay}">
+                    <TextBlock x:Name="FormTitle" Text="Выберите зал для редактирования" FontWeight="Bold" FontSize="18"/>
+                    
+                    <TextBox x:Name="EditHallName" PlaceholderText="Название зала (например: Лофт-студия)"/>
+                    <TextBox x:Name="EditHallDesc" PlaceholderText="Описание оборудования" AcceptsReturn="True" Height="100" TextWrapping="Wrap"/>
+                    <TextBox x:Name="EditHallImage" PlaceholderText="Путь к картинке (например: loft.png)"/>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="Сохранить зал" Click="SaveHallClick" Background="#2563EB" Foreground="White" CornerRadius="6" Padding="15,8"/>
+                        <Button Content="Удалить зал" Click="DeleteHallClick" Background="#EF4444" Foreground="White" CornerRadius="6" Padding="15,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

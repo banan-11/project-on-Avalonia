@@ -1,31 +1,29 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using Photo.Services;
-using static System.Collections.Specialized.BitVector32;
-
+using Avalonia.Media; // Для SolidColorBrush и Color
+using Photo.Services; // Для Session и UiSupport
 
 namespace Photo.Views;
 
 public partial class MainWindow : Window
 {
-
-    // Ссылка на единственное главное окно. Страницы пишут:
-    //     MainWindow.Instance.OpenPage(new CatalogView());
     public static MainWindow Instance { get; private set; } = null!;
 
-    // История открытых страниц для кнопки «Назад» (последняя — сверху).
+    // История открытых страниц для кнопки «Назад»
     private readonly Stack<UserControl> history = new();
 
     public MainWindow()
     {
-        InitializeComponent();                            // создаёт элементы из .axaml
-        Instance = this;                                  // запоминаем окно
-        OpenPage(new LoginView(), clearHistory: true);    // первая страница — вход
+        InitializeComponent();
+        Instance = this;
+
+        // СТАРТОВАЯ СТРАНИЦА — КАТАЛОГ (пользователь сразу Гость)
+        OpenPage(new CatalogView(), clearHistory: true);
     }
 
-
-    // Открыть страницу. clearHistory: true — начать историю заново (вход, выход).
+    /// <summary>
+    /// Открыть страницу. clearHistory: true — начать историю заново (вход, выход).
+    /// </summary>
     public void OpenPage(UserControl page, bool clearHistory = false)
     {
         if (clearHistory)
@@ -39,71 +37,136 @@ public partial class MainWindow : Window
             if (current != null)
                 history.Push(current);
         }
+
         ShowPage(page);
     }
 
-    // Показать страницу и обновить шапку и кнопки.
+    /// <summary>
+    /// Показать страницу и обновить шапку и кнопки навигации.
+    /// </summary>
     private void ShowPage(UserControl page)
     {
-        PageHost.Content = page;                       // подставить страницу в окно
-        Title = "КТПТ — " + page.Tag;                  // Tag страницы = её заголовок
-        MessageText.Text = "";                         // убрать старое сообщение
-        UserText.Text = Session.Caption;               // ФИО и роль (или «Гость»)
-        OrdersButton.IsVisible = Session.IsStaff;      // «Заказы» — только сотрудникам
-        BackButton.IsEnabled = history.Count > 0;      // «Назад», если есть куда
+        PageHost.Content = page;                       // Подставить страницу в окно
+
+        // Заголовок окна берется из свойства Tag страницы
+        Title = "Фотостудия — " + (page.Tag ?? "");
+
+        MessageText.Text = "";                         // Убрать старое сообщение
+
+        // Обновляем подпись пользователя в шапке ("Гость" или "Иван Иванов · Клиент")
+        UserText.Text = Session.Caption;
+
+        // --- ЛОГИКА ВИДИМОСТИ КНОПОК НАВИГАЦИИ ---
+
+        // 1. Кнопка "Заказы"
+        // Видна всем авторизованным пользователям: Клиентам, Фотографам и Админам.
+        OrdersButton.IsVisible = !Session.IsGuest;
+
+        // 2. Кнопки Администратора
+        // Видны ТОЛЬКО администратору.
+        bool isAdmin = Session.IsAdmin;
+
+        StaffButton.IsVisible = isAdmin;       // Старая кнопка "Управление"
+        EmployeesButton.IsVisible = isAdmin;   // Новая кнопка "Сотрудники"
+        HallsButton.IsVisible = isAdmin;       // Новая кнопка "Залы"
+
+        // 3. Кнопка Авторизации/Выхода
+        // Меняем текст и стиль в зависимости от состояния сессии.
+        if (Session.IsGuest)
+        {
+            AuthButton.Content = "Войти";
+            AuthButton.Background = new SolidColorBrush(Color.Parse("#2563EB")); // Синий
+        }
+        else
+        {
+            AuthButton.Content = "Выйти";
+            AuthButton.Background = new SolidColorBrush(Color.Parse("#6B7280")); // Серый для выхода
+        }
+
+        // 4. Кнопка "Назад"
+        BackButton.IsEnabled = history.Count > 0;
+
+        // Скрываем сообщение, если оно пустое (визуальный фикс)
+        MessageText.IsVisible = !string.IsNullOrEmpty(MessageText.Text);
     }
 
-
-    // Обычное сообщение (чёрным цветом).
+    /// <summary>
+    /// Обычное информационное сообщение.
+    /// </summary>
     public void ShowMessage(string text)
     {
-        MessageText.Foreground = Brushes.Black;
+        MessageText.Foreground = new SolidColorBrush(Color.Parse("#059669")); // Зеленый
         MessageText.Text = text;
+        MessageText.IsVisible = true;
     }
 
-    // Сообщение об ошибке (тёмно-красным цветом).
+    /// <summary>
+    /// Сообщение об ошибке.
+    /// </summary>
     public void ShowError(Exception error)
     {
-        System.Diagnostics.Trace.WriteLine(error); // подробности — в окно Output
-        MessageText.Foreground = Brushes.DarkRed;
+        System.Diagnostics.Trace.WriteLine(error); // Подробности — в окно Output
+        MessageText.Foreground = new SolidColorBrush(Color.Parse("#DC2626")); // Красный
         MessageText.Text = UiSupport.ErrorText(error);
+        MessageText.IsVisible = true;
     }
 
-    // ---------- Обработчики кнопок навигации ----------
+    // ---------- ОБРАБОТЧИКИ СОБЫТИЙ ----------
+
     private void BackClick(object? sender, RoutedEventArgs e)
     {
         if (history.Count > 0)
             ShowPage(history.Pop()); // Pop — достать последнюю страницу из истории
     }
+
     private void CatalogClick(object? sender, RoutedEventArgs e)
     {
         OpenPage(new CatalogView(), clearHistory: true);
     }
+
     private void OrdersClick(object? sender, RoutedEventArgs e)
     {
+        // Открываем список заказов.
         OpenPage(new OrdersView());
     }
-    private void LogoutClick(object? sender, RoutedEventArgs e)
+
+    private void StaffClick(object? sender, RoutedEventArgs e)
     {
-        Session.Logout();                                // снова гость
-        OpenPage(new LoginView(), clearHistory: true);   // история очищается
+        // Открываем форму создания сотрудника (старая кнопка)
+        OpenPage(new StaffCreationView());
     }
 
+    // === НОВЫЕ МЕТОДЫ ДЛЯ КНОПОК АДМИНА ===
 
+    private void EmployeesClick(object? sender, RoutedEventArgs e)
+    {
+        // Открываем страницу управления сотрудниками (редактирование фотографов)
+        // Убедись, что файл StaffManagementView создан!
+        OpenPage(new StaffManagementView());
+    }
 
+    private void HallsClick(object? sender, RoutedEventArgs e)
+    {
+        // Открываем страницу управления залами (добавление/редактирование залов)
+        // Убедись, что файл HallsManagementView создан!И
+        OpenPage(new HallsManagementView());
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /// <summary>
+    /// Объединенный метод для кнопки авторизации.
+    /// </summary>
+    private void LogoutOrLoginClick(object? sender, RoutedEventArgs e)
+    {
+        if (Session.IsGuest)
+        {
+            // Если гость -> открываем форму ВХОДА
+            OpenPage(new LoginView());
+        }
+        else
+        {
+            // Если залогинен -> выходим обратно в Гостей (в Каталог)
+            Session.Logout();
+            OpenPage(new CatalogView(), clearHistory: true);
+        }
+    }
 }

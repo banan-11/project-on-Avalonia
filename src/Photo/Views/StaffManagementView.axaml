@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Photo.Views.StaffManagementView"
+             Tag="Управление сотрудниками">
+
+    <DockPanel Margin="20" Background="#F3F4F6">
+        
+        <!-- Заголовок -->
+        <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,20">
+            <TextBlock Text="Управление персоналом" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Text="Выберите сотрудника из списка слева для редактирования данных." Foreground="#6B7280"/>
+        </StackPanel>
+
+        <Grid ColumnDefinitions="350,*">
+            
+            <!-- СЛЕВА: Список сотрудников -->
+            <Border Grid.Column="0" Background="White" CornerRadius="12" Padding="10" Margin="0,0,15,0" BoxShadow="0 4 12 #10000000">
+                <ListBox x:Name="StaffList" SelectionChanged="StaffSelected">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="12" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1" Cursor="Hand">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding User.FullName}" FontWeight="Bold" FontSize="16" Foreground="#111827"/>
+                                    <TextBlock Foreground="#6B7280" FontSize="13">
+                                        <Run Text="Логин: "/><Run Text="{Binding User.Login}"/> 
+                                        <Run Text=" | Цена: "/><Run Text="{Binding Price}"/> руб/час
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- СПРАВА: Панель редактирования -->
+            <Border Grid.Column="1" 
+                    Background="White" 
+                    CornerRadius="12" 
+                    Padding="25" 
+                    BoxShadow="0 4 12 #10000000"
+                    IsVisible="{Binding #StaffList.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                
+                <StackPanel Spacing="20">
+                    
+                    <TextBlock Text="Редактирование сотрудника" FontWeight="Bold" FontSize="20" Foreground="#111827"/>
+                    <Border Height="1" Background="#E5E7EB" />
+
+                    <!-- Сетка полей с явными подписями сверху -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="15" ColumnSpacing="15">
+                        
+                        <!-- Имя -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Имя" FontWeight="SemiBold" Foreground="#374151" FontSize="13"/>
+                            <TextBox x:Name="EditName" Watermark="Введите имя"/>
+                        </StackPanel>
+
+                        <!-- Фамилия -->
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="5">
+                            <TextBlock Text="Фамилия" FontWeight="SemiBold" Foreground="#374151" FontSize="13"/>
+                            <TextBox x:Name="EditLastName" Watermark="Введите фамилию"/>
+                        </StackPanel>
+                        
+                        <!-- Телефон -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Телефон" FontWeight="SemiBold" Foreground="#374151" FontSize="13"/>
+                            <TextBox x:Name="EditPhone" Watermark="Только цифры"/>
+                        </StackPanel>
+
+                        <!-- Email -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+                            <TextBlock Text="Email" FontWeight="SemiBold" Foreground="#374151" FontSize="13"/>
+                            <TextBox x:Name="EditEmail" Watermark="example@mail.ru"/>
+                        </StackPanel>
+                        
+                        <!-- Цена -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Spacing="5">
+                            <TextBlock Text="Цена за час (руб.)" FontWeight="SemiBold" Foreground="#374151" FontSize="13"/>
+                            <NumericUpDown x:Name="EditPrice" Minimum="0" Increment="100" FormatString="N0"/>
+                        </StackPanel>
+
+                        <!-- Логин -->
+                        <StackPanel Grid.Row="2" Grid.Column="1" Spacing="5">
+                            <TextBlock Text="Логин (изменить нельзя)" FontWeight="SemiBold" Foreground="#9CA3AF" FontSize="13"/>
+                            <TextBox x:Name="EditLogin" IsReadOnly="True" Background="#F3F4F6" Foreground="#6B7280"/>
+                        </StackPanel>
+
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                        <Button Content="Сохранить изменения" Click="SaveStaffClick" Background="#10B981" Foreground="White" CornerRadius="6" Padding="20,10" FontWeight="SemiBold"/>
+                        <Button Content="Отмена" Click="CancelEditClick" Background="#F3F4F6" Foreground="#374151" CornerRadius="6" Padding="20,10"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+            
+            <!-- Заглушка, если ничего не выбрано -->
+            <Border Grid.Column="1" 
+                    IsVisible="{Binding #StaffList.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Выберите сотрудника в списке для редактирования" FontSize="16" Foreground="#9CA3AF" FontWeight="SemiBold"/>
+            </Border>
+
+        </Grid>
+    </DockPanel>
+</UserControl>

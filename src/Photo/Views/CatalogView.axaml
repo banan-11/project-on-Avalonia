@@ -1,68 +1,127 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.CatalogView"
-             Tag="Каталог доступных залов">
-  
-        <DockPanel>
-         <!-- Верхняя часть: заголовок, поиск, категория, сортировка, счётчик. -->
-         <StackPanel DockPanel.Dock="Top" Spacing="8">
-             <TextBlock Classes="heading" Text="Каталог образовательных услуг" />
-             <!-- TextChanged срабатывает при каждом изменении текста. -->
-             <TextBox x:Name="SearchBox" PlaceholderText="Поиск по названию или коду"
-                      TextChanged="SearchChanged" />
-             <!-- Grid из трёх столбцов: категория (*), сортировка (250), кнопка (Auto). -->
-             <Grid ColumnDefinitions="*,250,Auto" Margin="0,0,0,8">
-                 <ComboBox x:Name="CategoryBox" HorizontalAlignment="Stretch"
-                           SelectionChanged="FilterChanged" />
-                 <ComboBox x:Name="SortBox" Grid.Column="1" HorizontalAlignment="Stretch"
-                           SelectionChanged="FilterChanged">
-                     <ComboBoxItem Content="Цена по возрастанию" />  <!-- индекс 0 -->
-                     <ComboBoxItem Content="Цена по убыванию" />     <!-- индекс 1 -->
-                 </ComboBox>
-                 <Button Grid.Column="2" Content="Обновить" Click="ReloadClick" />
-             </Grid>
-             <TextBlock x:Name="CountText" />
-         </StackPanel>
-         <!-- Список карточек. ItemsSource заполняется из C# объектами CourseCard. -->
-         <ListBox x:Name="CardsList" SelectionChanged="CardSelected">
-             <ListBox.ItemTemplate>
-                 <!-- DataTemplate — как выглядит ОДНА карточка.
-                      {Binding Name} = «возьми свойство Name у CourseCard этой строки». -->
-                 <DataTemplate>
-                     <Border Background="{Binding Background}" Padding="12" Margin="0,4">
-                         <Grid ColumnDefinitions="150,*,140">
-                             <Image Source="{Binding Image}" Width="140" Height="120"
-                                    Stretch="Uniform" />
-                             <StackPanel Grid.Column="1" Spacing="4" Margin="12,0">
-                                 <TextBlock Text="{Binding Name}" FontWeight="Bold" />
-                                 <TextBlock Text="{Binding Department}" />
-                                 <TextBlock Text="{Binding Category}" />
-                                 <TextBlock Text="{Binding SeatsText}" />
-                                 <TextBlock Text="{Binding Content}" />
-                             </StackPanel>
-                             <TextBlock Grid.Column="2" Text="{Binding PriceText}"
-                                        FontWeight="Bold" VerticalAlignment="Center" />
-                         </Grid>
-                     </Border>
-                 </DataTemplate>
-             </ListBox.ItemTemplate>
-         </ListBox>
-     </DockPanel>
+             Tag="Каталог фотостудий">
 
+    <DockPanel Background="#F5F7FA">
+        
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ: Поиск и Фильтры -->
+        <StackPanel DockPanel.Dock="Top" Spacing="15" Margin="20,20,20,10">
+            
+            <TextBlock Text="Фотостудии Санкт-Петербурга" 
+                       FontSize="28" FontWeight="Bold" Foreground="#333"/>
+            
+            <!-- Строка поиска и сортировки -->
+            <Grid ColumnDefinitions="*,200,Auto" RowDefinitions="Auto" Margin="0,10,0,0">
+                <TextBox Grid.Column="0" 
+                         x:Name="SearchBox" 
+                         PlaceholderText="Поиск по названию студии..." 
+                         TextChanged="SearchChanged"
+                         CornerRadius="8"
+                         Padding="10,8"/>
+                
+                <ComboBox Grid.Column="1" 
+                          x:Name="SortBox" 
+                          HorizontalAlignment="Stretch"
+                          SelectionChanged="FilterChanged"
+                          CornerRadius="8"
+                          Margin="10,0,0,0">
+                    <ComboBoxItem Content="Цена: по возрастанию" />
+                    <ComboBoxItem Content="Цена: по убыванию" /> 
+                </ComboBox>
+                
+                <Button Grid.Column="2" 
+                        Content="Обновить" 
+                        Click="ReloadClick" 
+                        Margin="10,0,0,0"
+                        CornerRadius="8"
+                        Classes="accent"/>
+            </Grid>
+            
+            <TextBlock x:Name="CountText" Foreground="#888" FontSize="12" Margin="0,5,0,0"/>
+        </StackPanel>
 
-
-
-
-
-
-
-
-
-
-
-
-
+        <!-- ОСНОВНАЯ ОБЛАСТЬ: Сетка карточек -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <!-- ItemsControl вместо ListBox для гибкой сетки -->
+            <ItemsControl x:Name="CardsList" Margin="20,0,20,20">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <!-- WrapPanel позволяет элементам переноситься на новую строку -->
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <!-- КАРТОЧКА ЗАЛА -->
+                        <!-- PointerPressed заменяет SelectionChanged для ItemsControl -->
+                        <Border Background="White" 
+                                CornerRadius="12" 
+                                Margin="10" 
+                                Width="280"
+                                BoxShadow="0 4 12 #20000000"
+                                ClipToBounds="True"
+                                Cursor="Hand"
+                                PointerPressed="Card_PointerPressed"
+                                Tag="{Binding}">
+                            
+                            <Grid RowDefinitions="180,Auto">
+                                
+                                <!-- 1. Изображение (верхняя часть) -->
+                                <Image Grid.Row="0" 
+                                       Source="{Binding Image}" 
+                                       Stretch="UniformToFill" 
+                                       Height="180"
+                                       Width="280"/>
+                                
+                                <!-- 2. Информация (нижняя часть) -->
+                                <!-- ИСПРАВЛЕНИЕ: StackPanel не имеет Padding. Используем Border как обертку -->
+                                <Border Grid.Row="1" Padding="15" Background="White">
+                                    <StackPanel Spacing="8">
+                                        
+                                        <!-- Название -->
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontWeight="Bold" 
+                                                   FontSize="16" 
+                                                   Foreground="#222"
+                                                   TextWrapping="Wrap"
+                                                   MaxLines="2"/>
+                                        
+                                        <!-- Описание / Оборудование (кратко) -->
+                                        <TextBlock Text="{Binding Description}" 
+                                                   Foreground="#666" 
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   MaxLines="2"/>
+                                        
+                                        <!-- Цена и Кнопка -->
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,10,0,0">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PriceText}" 
+                                                           FontWeight="Bold" 
+                                                           FontSize="18" 
+                                                           Foreground="#E67E22"/> 
+                                                <TextBlock Text="за час" FontSize="10" Foreground="#999"/>
+                                            </StackPanel>
+                                            
+                                            <!-- Визуальная кнопка -->
+                                            <Border Grid.Column="1" 
+                                                    Background="#FFC107" 
+                                                    CornerRadius="6" 
+                                                    Padding="12,6"
+                                                    VerticalAlignment="Center">
+                                                <TextBlock Text="Выбрать" Foreground="Black" FontWeight="SemiBold" FontSize="12"/>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        
+    </DockPanel>
 </UserControl>

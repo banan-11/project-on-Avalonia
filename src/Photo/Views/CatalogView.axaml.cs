@@ -1,52 +1,39 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
-using Photo.Services;
-using static System.Collections.Specialized.BitVector32;
-
-
+using Avalonia.Input; // Необходимо для PointerPressedEventArgs
+using Photo.Services; // Для HallCard, CatalogService и Session
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Photo.Views
 {
     public partial class CatalogView : UserControl
     {
-
-        // ВСЕ карточки, загруженные из БД. Фильтры каждый раз начинают с полного списка,
-        // поэтому очистка поиска возвращает скрытые карточки.
-        private List<CourseCard> allCards = new();
+        private List<HallCard> allCards = new();
 
         public CatalogView()
         {
             InitializeComponent();
 
-            SortBox.SelectedIndex = 0; // по умолчанию — «Цена по возрастанию»
+            if (SortBox != null)
+                SortBox.SelectedIndex = 0;
+
+            // Панель админа (AdminToolbar) удалена из интерфейса.
+            // Управление персоналом теперь доступно только через кнопку в MainWindow.
+
             Loaded += async (s, e) => await LoadCardsAsync();
-
-
         }
 
-
-        // Загрузить карточки из БД и заполнить список категорий.
+        // ==========================================================
+        // ЗАГРУЗКА ДАННЫХ ИЗ БАЗЫ
+        // ==========================================================
         private async Task LoadCardsAsync()
         {
             try
             {
-                // Запоминаем выбранную категорию, чтобы после обновления она осталась.
-                string? oldCategory = CategoryBox.SelectedItem as string;
-
                 allCards = await CatalogService.LoadCardsAsync();
-
-                // Категории: первая строка «Все категории», дальше — без повторов, по алфавиту.
-                var categories = new List<string> { "Все категории" };
-                categories.AddRange(allCards.Select(c => c.Category).Distinct().OrderBy(c => c));
-                CategoryBox.ItemsSource = categories;
-
-                if (oldCategory != null && categories.Contains(oldCategory))
-                    CategoryBox.SelectedItem = oldCategory;
-                else
-                    CategoryBox.SelectedIndex = 0;
-
                 ApplyFilters();
             }
             catch (Exception ex)
@@ -55,72 +42,66 @@ namespace Photo.Views
             }
         }
 
-
-        // Поиск + категория + сортировка. Вызывается при любом изменении фильтров.
+        // ==========================================================
+        // ФИЛЬТРАЦИЯ И СОРТИРОВКА
+        // ==========================================================
         private void ApplyFilters()
         {
-            string text = (SearchBox.Text ?? "").Trim();
-            // 1) Поиск: название ИЛИ код содержит текст (регистр букв не важен).
-            IEnumerable<CourseCard> rows = allCards.Where(c =>
-                c.Name.Contains(text, StringComparison.OrdinalIgnoreCase) ||
-                c.Code.Contains(text, StringComparison.OrdinalIgnoreCase));
-            // 2) Категория: индекс 0 — «Все категории», тогда не фильтруем.
-            if (CategoryBox.SelectedIndex > 0)
+            string text = (SearchBox.Text ?? "").Trim().ToLower();
+
+            // Фильтрация по названию зала
+            IEnumerable<HallCard> rows = allCards.Where(c =>
+                c.Name.ToLower().Contains(text));
+
+            // Сортировка по цене
+            if (SortBox != null && SortBox.SelectedIndex == 1)
             {
-                string category = (string)CategoryBox.SelectedItem!;
-                rows = rows.Where(c => c.Category == category);
-            }
-            // 3) Сортировка по цене: индекс 1 — по убыванию, иначе по возрастанию.
-            if (SortBox.SelectedIndex == 1)
                 rows = rows.OrderByDescending(c => c.Price);
+            }
             else
+            {
                 rows = rows.OrderBy(c => c.Price);
-            // 4) Показать результат.
-            List<CourseCard> result = rows.ToList();
+            }
+
+            List<HallCard> result = rows.ToList();
+
+            // Привязываем данные к ItemsControl (вместо ListBox)
             CardsList.ItemsSource = result;
+
+            // Обновляем счетчик найденных записей
             CountText.Text = $"Найдено: {result.Count} из {allCards.Count}";
         }
 
+        // Обработчики событий поиска и сортировки
+        private void SearchChanged(object? sender, TextChangedEventArgs e) => ApplyFilters();
+        private void FilterChanged(object? sender, SelectionChangedEventArgs e) => ApplyFilters();
 
+        // Кнопка "Обновить"
+        private async void ReloadClick(object? sender, RoutedEventArgs e) => await LoadCardsAsync();
 
-        // Изменился текст поиска.
-        private void SearchChanged(object? sender, TextChangedEventArgs e)
+        // ==========================================================
+        // ОБРАБОТЧИК КЛИКА ПО КАРТОЧКЕ (Новая логика для ItemsControl)
+        // ==========================================================
+        private void Card_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            ApplyFilters();
-        }
-        // Изменилась категория или сортировка.
-        private void FilterChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            ApplyFilters();
-        }
-        // Кнопка «Обновить».
-        private async void ReloadClick(object? sender, RoutedEventArgs e)
-        {
-            await LoadCardsAsync();
-        }
-        // Пользователь выбрал карточку — открываем страницу услуги.
-        private void CardSelected(object? sender, SelectionChangedEventArgs e)
-        {
-            CourseCard? card = CardsList.SelectedItem as CourseCard;
-            if (card == null)
-                return; // выбор сброшен — ничего не делаем
-            if (Session.IsGuest)
+            // В новом XAML у Border есть Tag="{Binding}", поэтому sender — это Border, а Tag — это HallCard
+            if (sender is Border border && border.Tag is HallCard card)
             {
-                CardsList.SelectedItem = null;
-                MainWindow.Instance.ShowMessage("Чтобы оформить заказ, войдите в систему.");
-                return;
+                // ПРОВЕРКА: Если это ГОСТЬ, блокируем доступ к деталям/бронированию
+                if (Session.IsGuest)
+                {
+                    MainWindow.Instance.ShowMessage("⛔ Чтобы забронировать студию, пожалуйста, войдите в систему.");
+                    return;
+                }
+
+                // Если пользователь авторизован (клиент, фотограф или админ), пускаем дальше
+                var bookingPage = new CourseView
+                {
+                    HallId = card.Id
+                };
+
+                MainWindow.Instance.OpenPage(bookingPage);
             }
-            // Создаём страницу услуги и передаём ей номер выбранной услуги.
-            MainWindow.Instance.OpenPage(new CourseView { CourseId = card.Id });
         }
-
-
-
-
-
-
-
-
-
     }
 }

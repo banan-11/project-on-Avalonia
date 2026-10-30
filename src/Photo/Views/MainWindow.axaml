@@ -2,45 +2,89 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1120" d:DesignHeight="760"
         x:Class="Photo.Views.MainWindow"
-        Title="Колледж туризма и прикладных технологий"
+        Title="Фотостудия"
         Width="1120" Height="760" MinWidth="850" MinHeight="600"
-        Icon="avares://Photo/Assets/mainPhoto.ico">
+        Icon="avares://Photo/Assets/mainPhoto.ico"
+        Background="#F9FAFB">
 
-    
+    <DockPanel>
 
-          <!-- DockPanel: элементы с DockPanel.Dock="Top" встают сверху друг под другом,
-           последний элемент (PageHost) занимает всё оставшееся место. -->
-      <DockPanel>
+        <!-- 1. ШАПКА ПРИЛОЖЕНИЯ -->
+        <Border DockPanel.Dock="Top" 
+                Background="White" 
+                BorderBrush="#E5E7EB" 
+                BorderThickness="0,0,0,1"
+                Padding="24,16">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Image Source="avares://Photo/Assets/logo.png" Width="40" Height="40" Stretch="Uniform" />
+                    <TextBlock Text="PhotoStudio" FontSize="20" FontWeight="Bold" Foreground="#111827" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock x:Name="UserText" Text="Гость" Foreground="#6B7280" FontSize="14" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
-          <!-- 1. Шапка: логотип слева, ФИО и роль пользователя справа. -->
-          <Border DockPanel.Dock="Top" Padding="16"
-                  Background="{StaticResource SurfaceBrush}">
-              <Grid ColumnDefinitions="Auto,*,Auto">
-                  <Image Source="avares://Ktpt.CourseOrder/Assets/logo.png"
-                         Width="250" Height="56" Stretch="Uniform" />
-                  <TextBlock x:Name="UserText" Grid.Column="2"
-                             VerticalAlignment="Center" MaxWidth="480" />
-              </Grid>
-          </Border>
+        <!-- 2. ПАНЕЛЬ НАВИГАЦИИ -->
+        <Border DockPanel.Dock="Top" Background="White" Padding="24,8" BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                
+                <Button x:Name="BackButton" Content="← Назад" Click="BackClick" IsEnabled="False" Classes="nav-button" Foreground="#6B7280"/>
+                <Border Width="1" Height="20" Background="#E5E7EB" Margin="4,0" VerticalAlignment="Center"/>
 
-          <!-- 2. Кнопки навигации. Click — имя метода в MainWindow.axaml.cs. -->
-          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,6">
-              <Button x:Name="BackButton" Content="Назад" Click="BackClick" />
-              <Button Content="Каталог" Click="CatalogClick" />
-              <Button x:Name="OrdersButton" Content="Заказы" Click="OrdersClick" />
-              <Button Content="Сменить пользователя" Click="LogoutClick" />
-          </StackPanel>
+                <Button Content="Каталог" Click="CatalogClick" Classes="nav-button-active"/>
+                
+                <Button x:Name="OrdersButton" Content="Просмотр заказов" Click="OrdersClick" IsVisible="False" Classes="nav-button"/>
 
-          <!-- 3. Строка сообщений: ошибки и подтверждения. -->
-          <TextBlock x:Name="MessageText" DockPanel.Dock="Top" Margin="16,4" />
+                <!-- === БЛОК АДМИНИСТРАТОРА === -->
+                <Button x:Name="StaffButton" Content="Добавление сотрудников" Click="StaffClick" IsVisible="False" Background="#2563EB" Foreground="White" CornerRadius="6" Padding="12,6"/>
 
-          <!-- 4. Место, куда подставляется текущая страница (LoginView, CatalogView…). -->
-          <ContentControl x:Name="PageHost" Margin="16" />
-      </DockPanel>
+                <!-- НОВАЯ КНОПКА: Сотрудники -->
+                <Button x:Name="EmployeesButton" Content="Список сотрудников" Click="EmployeesClick" IsVisible="False" Background="#2563EB" Foreground="White" CornerRadius="6" Padding="12,6"/>
 
+                <!-- НОВАЯ КНОПКА: Залы -->
+                <Button x:Name="HallsButton" Content="редактирование залов" Click="HallsClick" IsVisible="False" Background="#2563EB" Foreground="White" CornerRadius="6" Padding="12,6"/>
+                <!-- ========================== -->
 
+                <Border Width="1" Height="20" Background="#E5E7EB" Margin="4,0" VerticalAlignment="Center"/>
 
+                <Button x:Name="AuthButton" Content="Войти" Click="LogoutOrLoginClick" Background="#2563EB" Foreground="White" CornerRadius="6" Padding="16,6" FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
 
+        <!-- 3. СТРОКА СООБЩЕНИЙ -->
+        <TextBlock x:Name="MessageText" DockPanel.Dock="Top" Margin="24,8" TextWrapping="Wrap" FontSize="14" FontWeight="Medium"/>
+
+        <!-- 4. ОСНОВНОЙ КОНТЕНТ -->
+        <ContentControl x:Name="PageHost" Margin="0" />
+        
+    </DockPanel>
+
+    <Window.Styles>
+        <Style Selector="Button.nav-button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#4B5563"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="Button.nav-button:pointerover">
+            <Setter Property="Background" Value="#F3F4F6"/>
+            <Setter Property="Foreground" Value="#111827"/>
+        </Style>
+        <Style Selector="Button.nav-button-active">
+            <Setter Property="Background" Value="#EFF6FF"/>
+            <Setter Property="Foreground" Value="#2563EB"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+    </Window.Styles>
 </Window>

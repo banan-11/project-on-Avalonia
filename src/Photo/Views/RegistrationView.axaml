@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Photo.Views.RegistrationView"
+             Tag="Регистрация">
+
+    <ScrollViewer>
+        <StackPanel Spacing="12" MaxWidth="500" HorizontalAlignment="Center" Margin="20">
+            <TextBlock Classes="heading" Text="Регистрация клиента" />
+            
+            <TextBox x:Name="RegLogin" PlaceholderText="Придумайте логин" />
+            <TextBox x:Name="RegPassword" PlaceholderText="Придумайте пароль" PasswordChar="*" />
+            <TextBox x:Name="RegFirstName" PlaceholderText="Имя" />
+            <TextBox x:Name="RegLastName" PlaceholderText="Фамилия" />
+            <TextBox x:Name="RegPhone" PlaceholderText="Телефон (только цифры)" />
+            <TextBox x:Name="RegEmail" PlaceholderText="Email" />
+
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                <Button Content="Зарегистрироваться" Classes="accent" Click="SubmitClick" Width="180"/>
+                <Button Content="Отмена" Click="CancelClick" Width="100"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

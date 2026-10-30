@@ -2,34 +2,159 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
              x:Class="Photo.Views.OrdersView"
-             Tag="Список заказов">
-  
+             Tag="Список заказов"
+             Background="#F3F4F6">
 
-      <DockPanel>
-     <StackPanel DockPanel.Dock="Top" Spacing="10">
-         <TextBlock Classes="heading" Text="Список заказов" />
-         <StackPanel Orientation="Horizontal">
-             <Button Content="Состав заказа" Classes="accent" Click="OpenClick" />
-             <Button Content="Новый заказ" Click="NewClick" />
-             <Button Content="Обновить" Click="ReloadClick" />
-         </StackPanel>
-     </StackPanel>
-     <!-- Каждый заказ показывается текстом из Order.ToString() (файл ModelExtras.cs). -->
-     <ListBox x:Name="OrdersList" />
- </DockPanel>
+    <!-- Основной контейнер: растягиваем на всю ширину с небольшими отступами -->
+    <Grid Margin="20,20,20,0">
+        
+        <!-- DockPanel теперь занимает всё доступное место, но с ограничением MaxWidth для очень широких экранов -->
+        <DockPanel MaxWidth="1400" HorizontalAlignment="Stretch">
+            
+            <!-- ВЕРХНЯЯ ПАНЕЛЬ: Заголовок и Кнопки -->
+            <StackPanel DockPanel.Dock="Top" Spacing="15" Margin="0,0,0,20">
+                
+                <!-- Заголовок -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="📋" FontSize="28" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TitleText" Text="Список заказов" 
+                               FontSize="24" FontWeight="Bold" Foreground="#111827"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
 
+                <!-- Панель кнопок -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Состав заказа" 
+                            Click="OpenClick"
+                            Background="#2563EB" Foreground="White"
+                            CornerRadius="8" Padding="16,8" FontWeight="SemiBold"/>
+                    
+                    <Button x:Name="NewButton" 
+                            Content="Новый заказ" 
+                            Click="NewClick"
+                            Background="#10B981" Foreground="White"
+                            CornerRadius="8" Padding="16,8" FontWeight="SemiBold"/>
+                    
+                    <Button Content="🔄 Обновить" 
+                            Click="ReloadClick"
+                            Background="#FFFFFF" Foreground="#374151"
+                            BorderBrush="#D1D5DB" BorderThickness="1"
+                            CornerRadius="8" Padding="16,8" FontWeight="SemiBold"/>
+                </StackPanel>
+            </StackPanel>
 
+            <!-- СПИСОК ЗАКАЗОВ -->
+            <Border Background="White" CornerRadius="12" BoxShadow="0 4 12 #10000000" Padding="15">
+                <ListBox x:Name="OrdersList" 
+                         Background="Transparent"
+                         BorderThickness="0"
+                         SelectionMode="Single">
+                    
+                    <!-- ТЕМА ЭЛЕМЕНТА СПИСКА (Стилизация выделения) -->
+                    <ListBox.ItemContainerTheme>
+                        <ControlTheme TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,0,0,10"/> <!-- Чуть больше отступ между карточками -->
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <ControlTemplate>
+                                    <Border Name="RootBorder"
+                                            Background="{TemplateBinding Background}"
+                                            BorderBrush="#E5E7EB" 
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            Padding="0"
+                                            Cursor="Hand">
+                                        <ContentPresenter Name="PART_ContentPresenter"
+                                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                          Content="{TemplateBinding Content}"
+                                                          Padding="0"
+                                                          VerticalContentAlignment="Stretch"
+                                                          HorizontalContentAlignment="Stretch"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter>
+                            
+                            <!-- Состояние: Наведение мыши -->
+                            <Style Selector="^ /template/ Border#RootBorder:pointerover">
+                                <Setter Property="Background" Value="#F9FAFB"/>
+                                <Setter Property="BorderBrush" Value="#D1D5DB"/>
+                            </Style>
 
+                            <!-- Состояние: Выбрано (Активно) -->
+                            <Style Selector="^:selected /template/ Border#RootBorder">
+                                <Setter Property="Background" Value="#EFF6FF"/> 
+                                <Setter Property="BorderBrush" Value="#2563EB"/> 
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </Style>
+                        </ControlTheme>
+                    </ListBox.ItemContainerTheme>
 
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <!-- ВНУТРЕННЯЯ ЧАСТЬ КАРТОЧКИ -->
+                            <!-- Увеличил Padding до 20 для большего воздуха внутри карточки -->
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" Margin="20">
+                                
+                                <!-- Иконка -->
+                                <Border Grid.RowSpan="2" Grid.Column="0" 
+                                        Width="48" Height="48" 
+                                        CornerRadius="24" 
+                                        Background="#FFFFFF"
+                                        BorderBrush="#E5E7EB" BorderThickness="1"
+                                        Margin="0,0,20,0"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="📷" FontSize="24" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"/>
+                                </Border>
 
+                                <!-- Инфо -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="6">
+                                    <TextBlock Text="{Binding Hall.Name}" 
+                                               FontWeight="Bold" FontSize="18" Foreground="#111827"/>
+                                    <TextBlock Foreground="#6B7280" FontSize="14">
+                                        <Run Text="Фотограф: "/>
+                                        <Run Text="{Binding Photographer.User.FullName, FallbackValue=Не назначен}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                </StackPanel>
 
+                                <!-- Цена -->
+                                <StackPanel Grid.RowSpan="2" Grid.Column="2" 
+                                            VerticalAlignment="Center" 
+                                            HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding TotalCost, StringFormat={}{0:N2} руб.}" 
+                                               FontWeight="Bold" FontSize="20" Foreground="#2563EB"/>
+                                </StackPanel>
 
-
-
-
-
-
-
+                                <!-- Дата и время -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" 
+                                            Orientation="Horizontal" Spacing="12" Margin="0,10,0,0">
+                                    <Border Background="#ECFDF5" CornerRadius="6" Padding="8,4">
+                                        <TextBlock Foreground="#059669" FontSize="13" FontWeight="SemiBold">
+                                        
+                                            <Run Text="{Binding BookingDate, StringFormat={}{0:dd.MM.yyyy}}"/>
+                                        </TextBlock>
+                                    </Border>
+                                    
+                                    <Border Background="#F3F4F6" CornerRadius="6" Padding="8,4">
+                                        <TextBlock Foreground="#4B5563" FontSize="13">
+                                           
+                                            <Run Text="{Binding StartTime, StringFormat={}{0:hh\\:mm}}"/>
+                                            <Run Text=" ("/>
+                                            <Run Text="{Binding HoursCount}"/>
+                                            <Run Text=" ч.)"/>
+                                        </TextBlock>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+            
+        </DockPanel>
+    </Grid>
 </UserControl>

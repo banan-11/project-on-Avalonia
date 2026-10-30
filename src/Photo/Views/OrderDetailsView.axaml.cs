@@ -1,64 +1,79 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
+using Avalonia.Media; // Для SolidColorBrush и Color
+using Microsoft.EntityFrameworkCore;
+using Photo.Data;
 using Photo.Models;
 using Photo.Services;
-using static System.Collections.Specialized.BitVector32;
-
 
 namespace Photo.Views
 {
     public partial class OrderDetailsView : UserControl
     {
-
-
-        // Номер открытого заказа. Задаётся при создании страницы:
-        //     new OrderDetailsView { OrderId = 7 }
         public int OrderId { get; set; }
-
-
-        // Что удалить после подтверждения: номер позиции или null (= весь заказ).
-        private int? itemToDelete;
-
-
-
 
         public OrderDetailsView()
         {
             InitializeComponent();
-
             Loaded += async (s, e) => await LoadOrderAsync();
         }
 
-
-
-
-
-
-        // Загрузить заказ и показать его состав.
         private async Task LoadOrderAsync()
         {
             try
             {
                 ConfirmPanel.IsVisible = false;
-                Order? order = await OrderService.GetOrderAsync(OrderId);
+
+                using var db = Db.Create();
+
+                var order = await db.Orders
+                    .Include(o => o.Hall)
+                    .Include(o => o.User)
+                    .Include(o => o.Photographer)
+                        .ThenInclude(p => p.User)
+                    .Include(o => o.Status)
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(o => o.OrderId == OrderId);
+
                 if (order == null)
                 {
-                    // Заказа больше нет (удалили весь заказ или последнюю позицию).
-                    MainWindow.Instance.OpenPage(new OrdersView(), clearHistory: true);
-                    MainWindow.Instance.ShowMessage("Заказ удалён, места возвращены.");
+                    MainWindow.Instance.ShowMessage("Заказ не найден.");
+                    GoBackClick(null, null);
                     return;
                 }
-                HeaderText.Text = $"Заказ № {order.OrderId}";
-                ClientText.Text = "Клиент: " + order.Client.FullName;
-                DateText.Text = "Дата: " + order.OrderDate.ToString("dd.MM.yyyy");
-                TotalText.Text = $"Итого: {order.OrderItems.Sum(i => i.Total):N2} руб.";
-                ItemsList.ItemsSource = order.OrderItems.ToList();
-                // Панель администратора видна только администратору.
-                AdminPanel.IsVisible = Session.IsAdmin;
-                // CalendarDatePicker работает с DateTime, а в БД — DateOnly: переводим.
-                DateBox.SelectedDate = order.OrderDate.ToDateTime(TimeOnly.MinValue);
+
+                // Заполняем данные
+                HeaderText.Text = $"Бронирование № {order.OrderId}";
+                ClientText.Text = order.User?.FullName ?? "Неизвестный клиент";
+                HallText.Text = order.Hall?.Name ?? "Зал удален";
+                PhotographerText.Text = order.Photographer?.ToString() ?? "Без фотографа";
+                DateText.Text = order.BookingDate.ToString("dd.MM.yyyy");
+                TimeText.Text = $"{order.StartTime:hh\\:mm} ({order.HoursCount} ч.)";
+                TotalText.Text = $"{order.TotalCost:N2} руб.";
+
+                // Логика цвета статуса
+                StatusText.Text = order.Status?.Name ?? "Без статуса";
+
+                // Меняем цвет бейджика статуса в зависимости от текста
+                var statusBorder = StatusText.Parent as Border;
+                if (statusBorder != null)
+                {
+                    if (order.Status?.Name == "Подтверждён")
+                    {
+                        statusBorder.Background = new SolidColorBrush(Color.Parse("#ECFDF5")); // Светло-зеленый
+                        StatusText.Foreground = new SolidColorBrush(Color.Parse("#059669")); // Темно-зеленый
+                    }
+                    else if (order.Status?.Name == "Отменён")
+                    {
+                        statusBorder.Background = new SolidColorBrush(Color.Parse("#FEF2F2")); // Светло-красный
+                        StatusText.Foreground = new SolidColorBrush(Color.Parse("#DC2626")); // Темно-красный
+                    }
+                    else
+                    {
+                        statusBorder.Background = new SolidColorBrush(Color.Parse("#F3F4F6")); // Серый
+                        StatusText.Foreground = new SolidColorBrush(Color.Parse("#4B5563")); // Темно-серый
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -66,71 +81,36 @@ namespace Photo.Views
             }
         }
 
-
-
-        // Кнопка «Обновить».
-        private async void ReloadClick(object? sender, RoutedEventArgs e)
+        private void CancelOrderClick(object? sender, RoutedEventArgs e)
         {
-            await LoadOrderAsync();
-        }
-
-        // Кнопка «Сохранить дату» (администратор).
-        private async void SaveDateClick(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (DateBox.SelectedDate == null)
-                    throw new AppException("Выберите дату.");
-
-                DateOnly date = DateOnly.FromDateTime(DateBox.SelectedDate.Value);
-                await OrderService.ChangeDateAsync(OrderId, date);
-                await LoadOrderAsync();
-                MainWindow.Instance.ShowMessage("Дата сохранена. Цены позиций не изменились.");
-            }
-            catch (Exception ex)
-            {
-                MainWindow.Instance.ShowError(ex);
-            }
-        }
-
-
-
-
-
-        // Кнопка «Удалить весь заказ»: только показываем вопрос.
-        private void DeleteOrderClick(object? sender, RoutedEventArgs e)
-        {
-            itemToDelete = null;
-            ConfirmText.Text = "Удалить весь заказ? Все его места вернутся в потоки.";
             ConfirmPanel.IsVisible = true;
         }
-        // Кнопка «Удалить выбранную позицию»: только показываем вопрос.
-        private void DeleteItemClick(object? sender, RoutedEventArgs e)
-        {
-            OrderItem? item = ItemsList.SelectedItem as OrderItem;
-            if (item == null)
-            {
-                MainWindow.Instance.ShowMessage("Сначала выберите позицию в списке.");
-                return;
-            }
-            itemToDelete = item.OrderItemId;
-            ConfirmText.Text = "Удалить позицию? Её места вернутся в поток. " +
-                               "Если позиция последняя, удалится и весь заказ.";
-            ConfirmPanel.IsVisible = true;
-        }
-        // Кнопка «Отмена»: скрыть вопрос, ничего не удалять.
-        private void CancelClick(object? sender, RoutedEventArgs e)
+
+        private void CancelDeleteClick(object? sender, RoutedEventArgs e)
         {
             ConfirmPanel.IsVisible = false;
         }
-        // Кнопка «Да, удалить».
-        private async void ConfirmClick(object? sender, RoutedEventArgs e)
+
+        private async void ConfirmDeleteClick(object? sender, RoutedEventArgs e)
         {
             try
             {
-                await OrderService.DeleteAsync(OrderId, itemToDelete);
-                MainWindow.Instance.ShowMessage("Удаление выполнено, места возвращены.");
-                await LoadOrderAsync(); // перечитать заказ (или уйти к списку, если его нет)
+                using var db = Db.Create();
+                var orderToDelete = await db.Orders.FindAsync(OrderId);
+
+                if (orderToDelete != null)
+                {
+                    // Вместо удаления можно менять статус на "Отменён", если нужно сохранять историю
+                    // orderToDelete.StatusId = 3; 
+                    // await db.SaveChangesAsync();
+
+                    // Или удаляем физически, как было раньше:
+                    db.Orders.Remove(orderToDelete);
+                    await db.SaveChangesAsync();
+
+                    MainWindow.Instance.ShowMessage($"Бронирование № {OrderId} успешно отменено.");
+                    GoBackClick(null, null);
+                }
             }
             catch (Exception ex)
             {
@@ -138,9 +118,9 @@ namespace Photo.Views
             }
         }
 
-
-
-
-
+        private void GoBackClick(object? sender, RoutedEventArgs e)
+        {
+            MainWindow.Instance.OpenPage(new OrdersView());
+        }
     }
 }

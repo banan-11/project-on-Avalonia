@@ -1,78 +1,52 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
-using Photo.Models;
-using Photo.Services;
-using static System.Collections.Specialized.BitVector32;
+using Photo.Services; // Для Session и AppException
 
+namespace Photo.Views;
 
-namespace Photo.Views
+public partial class LoginView : UserControl
 {
-    public partial class LoginView : UserControl
+    public LoginView()
     {
-        public LoginView()
-        {
-            InitializeComponent();
-            // Loaded срабатывает, когда страница появилась на экране.
-            // Тогда загружаем список пользователей из БД.
-            Loaded += async (s, e) => await LoadUsersAsync();
+        InitializeComponent();
+    }
 
-        }
+    // ---------- ЛОГИКА ВХОДА ----------
+    private async void LoginClick(object? sender, RoutedEventArgs e)
+    {
+        StatusText.Text = "";
 
+        try
+        {
+            string login = (LoginBox.Text ?? "").Trim();
+            string pass = PasswordBox.Text ?? "";
 
-        // Заполнить выпадающий список пользователями из БД.
-        private async Task LoadUsersAsync()
-        {
-            try
-            {
-                UsersBox.ItemsSource = await Session.GetUsersAsync();
-            }
-            catch (Exception ex)
-            {
-                MainWindow.Instance.ShowError(ex); // например, сервер недоступен
-            }
-        }
-        // Кнопка «Обновить список».
-        private async void ReloadClick(object? sender, RoutedEventArgs e)
-        {
-            await LoadUsersAsync();
-        }
-        // Кнопка «Войти».
-        private async void LoginClick(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // SelectedItem — выбранный элемент списка; as User — «считать его User».
-                User? user = UsersBox.SelectedItem as User;
-                if (user == null)
-                    throw new AppException("Выберите логин из списка.");
-                await Session.LoginAsync(user.UserId);
-                MainWindow.Instance.OpenPage(new CatalogView(), clearHistory: true);
-            }
-            catch (Exception ex)
-            {
-                MainWindow.Instance.ShowError(ex);
-            }
-        }
-        // Кнопка «Войти как гость».
-        private void GuestClick(object? sender, RoutedEventArgs e)
-        {
-            Session.Logout();
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(pass))
+                throw new AppException("Введите логин и пароль.");
+
+            // Проверяем данные в базе через сервис
+            await Session.LoginAsync(login, pass);
+
+            // Успешный вход: переходим в Каталог.
+            // Если это Админ, он увидит дополнительные кнопки благодаря проверке IsAdmin в MainWindow/CatalogView.
             MainWindow.Instance.OpenPage(new CatalogView(), clearHistory: true);
         }
+        catch (AppException ex)
+        {
+            StatusText.Foreground = Avalonia.Media.Brushes.DarkRed;
+            StatusText.Text = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            StatusText.Foreground = Avalonia.Media.Brushes.DarkRed;
+            StatusText.Text = "Ошибка системы: " + ex.Message;
+        }
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
+    // ---------- ПЕРЕХОД НА РЕГИСТРАЦИЮ КЛИЕНТА ----------
+    private void GoToRegisterClick(object? sender, RoutedEventArgs e)
+    {
+        // Открываем страницу регистрации обычного пользователя
+        MainWindow.Instance.OpenPage(new RegistrationView());
     }
 }

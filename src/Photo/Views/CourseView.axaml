@@ -1,42 +1,100 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Photo.Views.CourseView"
-             Tag="Услуга и оформление заказа">
-  
-            <!-- ScrollViewer добавляет прокрутку, если содержимое не помещается в окно. -->
-        <ScrollViewer>
-            <StackPanel Spacing="10" MaxWidth="700" HorizontalAlignment="Left">
-                <!-- Сведения об услуге: заполняются из C#. -->
-                <TextBlock x:Name="NameText" Classes="heading" />
-                <Image x:Name="CourseImage" Height="150" HorizontalAlignment="Left"
-                       Stretch="Uniform" />
-                <TextBlock x:Name="DescriptionText" />
-                <TextBlock x:Name="PriceText" FontWeight="Bold" />
-                <!-- Выбор потока: только потоки со свободными местами. -->
-                <TextBlock Text="Учебный поток:" />
-                <ComboBox x:Name="VariantBox" MinWidth="500" />
-                <!-- Количество мест: обычное поле ввода, проверяем в C#. -->
-                <TextBlock Text="Количество мест:" />
-                <TextBox x:Name="QuantityBox" Text="1" Width="160" HorizontalAlignment="Left" />
-                <!-- Выбор клиента: панель видна только методисту и администратору. -->
-                <StackPanel x:Name="ClientPanel" Spacing="6">
-                    <TextBlock Text="Клиент, для которого оформляется заказ:" />
-                    <ComboBox x:Name="ClientBox" MinWidth="580" />
+             Tag="Бронирование зала">
+
+    <!-- Основной контейнер: 2 колонки -->
+    <Grid ColumnDefinitions="*,450" Margin="10">
+        
+        <!-- ЛЕВАЯ ЧАСТЬ: Информация о зале -->
+        <StackPanel Grid.Column="0" Spacing="15" Margin="0,0,20,0">
+            
+            <TextBlock x:Name="HallNameText" Classes="heading" FontSize="28"/>
+            
+            <Image x:Name="HallImage" Height="300" Stretch="UniformToFill" 
+                   HorizontalAlignment="Left" Width="500"/>
+                   
+            <Border BorderThickness="1" Padding="10" CornerRadius="5" Background="#F9F9F9">
+                <StackPanel>
+                    <TextBlock Text="Оборудование:" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                    <TextBlock x:Name="EquipmentText" TextWrapping="Wrap" Margin="0,5,0,0"/>
                 </StackPanel>
-                <TextBlock Text="Заказ сохранится только после нажатия «Оформить»." />
-                <StackPanel Orientation="Horizontal">
-                    <Button x:Name="SaveButton" Content="Оформить" Classes="accent"
-                            Click="SaveClick" />
-                    <Button Content="Обновить карточку" Click="ReloadClick" />
+            </Border>
+
+        </StackPanel>
+
+        <!-- ПРАВАЯ ЧАСТЬ: Форма бронирования -->
+        <Border Grid.Column="1" BorderThickness="1" Padding="20" CornerRadius="8" 
+                Background="White" BoxShadow="0 0 10 #DDDDDD">
+            
+            <StackPanel Spacing="15">
+                
+                <TextBlock Text="Параметры съемки" FontWeight="Bold" FontSize="18"/>
+
+                <!-- 1. Выбор фотографа -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Фотограф:" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="PhotographerBox" PlaceholderText="Выберите мастера..." />
+                    
+                    <TextBlock x:Name="PriceHintText" Opacity="0.7" FontSize="12" 
+                               Text="Цена за час появится после выбора фотографа"/>
                 </StackPanel>
+
+                <!-- 2. Дата -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Дата съемки:" FontWeight="SemiBold"/>
+                    <!-- Имя DateBox важно для привязки в C# -->
+                    <CalendarDatePicker x:Name="DateBox" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- 3. Время начала -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Время начала:" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto,*">
+                        <TextBlock Text="Часов:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <!-- FormatString="N0" убирает десятичные знаки -->
+                        <NumericUpDown x:Name="StartHourBox" 
+                                       Minimum="0" Maximum="23" Value="10" 
+                                       Increment="1"
+                                       FormatString="N0"
+                                       Grid.Column="1"/>
+                        
+                        <TextBlock Text="Минут:" VerticalAlignment="Center" Margin="10,0,5,0" Grid.Column="2"/>
+                        <!-- Increment="15" позволяет быстро выбирать четверти часа -->
+                        <NumericUpDown x:Name="StartMinuteBox" 
+                                       Minimum="0" Maximum="59" Value="0" 
+                                       Increment="15"
+                                       FormatString="N0"
+                                       Grid.Column="3"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- 4. Длительность -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Длительность (часов):" FontWeight="SemiBold"/>
+                    <!-- FormatString="N0" гарантирует целое число -->
+                    <NumericUpDown x:Name="DurationBox" 
+                                   Minimum="1" Maximum="8" Value="2" 
+                                   Increment="1"
+                                   FormatString="N0"/>
+                </StackPanel>
+
+                <!-- Итоговая сумма -->
+                <Separator/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Итого к оплате:" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TotalCostText" FontWeight="Bold" FontSize="20" 
+                               Foreground="{StaticResource AccentBrush}" Grid.Column="1"/>
+                </Grid>
+
+                <!-- Кнопки -->
+                <Button Content="Забронировать" Click="BookClick" 
+                        HorizontalAlignment="Stretch" Margin="0,10,0,0"
+                        Classes="accent"/>
+                        
+                <Button Content="Отмена" Click="CancelClick" HorizontalAlignment="Stretch"/>
+
             </StackPanel>
-        </ScrollViewer>
-
-
-
-
-
+        </Border>
+    </Grid>
 </UserControl>
