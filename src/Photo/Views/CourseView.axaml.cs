@@ -109,6 +109,9 @@ namespace Photo.Views
         }
 
         // Кнопка "Забронировать"
+        // ВАЖНО: поставь реальный ID статуса "Отменён" из своей БД
+        private const int CancelledStatusId = 3;
+
         private async void BookClick(object? sender, RoutedEventArgs e)
         {
             if (Session.CurrentUser == null)
@@ -131,20 +134,63 @@ namespace Photo.Views
 
             try
             {
-                // Создаем объект заказа
+                var date = DateOnly.FromDateTime(DateBox.SelectedDate.Value);
+                var startTime = new TimeOnly((int)StartHourBox.Value!, (int)StartMinuteBox.Value!);
+                var hours = DurationBox.Value ?? 1;
+
+                var newStart = date.ToDateTime(startTime);
+                var newEnd = newStart.AddHours((double)hours);
+
+                if (newStart < DateTime.Now)
+                {
+                    MainWindow.Instance.ShowMessage("Нельзя забронировать время в прошлом.");
+                    return;
+                }
+
+                using var db = Db.Create();
+
+                // Берем заказы за соседние дни тоже, чтобы поймать пересечение через полночь
+                var from = date.AddDays(-1);
+                var to = date.AddDays(1);
+
+                var candidates = await db.Orders
+                    .AsNoTracking()
+                    .Where(o => o.StatusId != CancelledStatusId
+                             && o.BookingDate >= from && o.BookingDate <= to
+                             && (o.HallId == HallId || o.PhotographerId == photographer.PhotographerId))
+                    .ToListAsync();
+
+                // Само сравнение делаем в памяти, EF плохо переводит арифметику над TimeOnly
+                var conflict = candidates.FirstOrDefault(o =>
+                {
+                    var s = o.BookingDate.ToDateTime(o.StartTime);
+                    var end = s.AddHours(Convert.ToDouble(o.HoursCount));
+                    return newStart < end && s < newEnd;
+                });
+
+                if (conflict != null)
+                {
+                    var what = conflict.HallId == HallId ? "Зал" : "Фотограф";
+                    var cs = conflict.BookingDate.ToDateTime(conflict.StartTime);
+                    var ce = cs.AddHours(Convert.ToDouble(conflict.HoursCount));
+
+                    MainWindow.Instance.ShowMessage(
+                        $"{what} уже занят с {cs:HH:mm} до {ce:HH:mm} ({cs:dd.MM.yyyy}). Выберите другое время.");
+                    return;
+                }
+
                 var order = new Order
                 {
                     HallId = HallId,
                     PhotographerId = photographer.PhotographerId,
                     UserId = Session.CurrentUser.UserId,
-                    BookingDate = DateOnly.FromDateTime(DateBox.SelectedDate.Value),
-                    StartTime = new TimeOnly((int)StartHourBox.Value!, (int)StartMinuteBox.Value!),
-                    HoursCount = DurationBox.Value ?? 1,
-                    StatusId = 1, // Статус "Подтверждён" (проверь ID статуса в своей БД!)
+                    BookingDate = date,
+                    StartTime = startTime,
+                    HoursCount = hours,
+                    StatusId = 1,
                     CreatedAt = DateTime.Now
                 };
 
-                using var db = Db.Create();
                 db.Orders.Add(order);
                 await db.SaveChangesAsync();
 
