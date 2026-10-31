@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq; // Нужно для .ToList() и .Any() в памяти
+using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Photo.Data;
@@ -11,8 +12,30 @@ namespace Photo.Services
 {
     public static class OrderService
     {
+        private const int MinutesInDay = 24 * 60;
+
         /// <summary>
-        /// Оформить бронирование зала. Возвращает номер нового заказа.
+        /// Длительность блокировки в минутах: минимум 1 час.
+        /// </summary>
+        private static int GetBlockMinutes(decimal hoursCount)
+        {
+            return (int)Math.Round(Math.Max(hoursCount, 1m) * 60m, MidpointRounding.AwayFromZero);
+        }
+
+        private static int ToMinutes(TimeOnly time)
+        {
+            return time.Hour * 60 + time.Minute;
+        }
+
+        private static string FormatMinutes(int minutes)
+        {
+            // Для сообщения об ошибке: 1440 минут показываем как 00:00
+            minutes %= MinutesInDay;
+            return $"{minutes / 60:00}:{minutes % 60:00}";
+        }
+
+        /// <summary>
+        /// Оформить бронирование зала с защитой от дубликатов и гонок данных.
         /// </summary>
         public static async Task<int> CreateBookingAsync(
             int hallId,
@@ -22,57 +45,65 @@ namespace Photo.Services
             decimal hoursCount,
             int userId)
         {
-            // 1. Проверка авторизации
+            // 1. Проверка прав доступа
             if (Session.CurrentUser == null)
                 throw new AppException("Гость не может оформить заказ. Войдите в систему.");
 
             if (Session.IsPhotographer)
-                throw new AppException("Вы вошли как фотограф. Вы не можете оформлять заказы.");
+                throw new AppException("Фотографы не могут создавать заказы.");
+
+            // Проверка на корректность введенных данных
+            if (hoursCount <= 0)
+                throw new AppException("Количество часов должно быть больше нуля.");
+
+            // Время считаем в минутах от начала суток, а не через TimeOnly.AddHours:
+            // TimeOnly циклический, и 23:00 + 2 ч даст 01:00, что ломает проверку пересечений.
+            int newStart = ToMinutes(startTime);
+            int newEnd = newStart + GetBlockMinutes(hoursCount);
+
+            if (newEnd > MinutesInDay)
+                throw new AppException("Бронирование не может заканчиваться после полуночи. Выберите более раннее время или меньшее количество часов.");
 
             using var db = Db.Create();
 
-            // === БЛОК ПРОВЕРКИ КОНФЛИКТОВ (Исправленный) ===
-
-            // Мы загружаем все активные заказы этого зала на эту дату в память.
-            // Это надежнее, чем пытаться сделать сложную математику времени внутри SQL запроса.
-            var existingOrders = await db.Orders
-                .Where(o => o.HallId == hallId &&
-                            o.BookingDate == bookingDate &&
-                            o.StatusId != 3) // Статус 3 = Отменен
-                .Select(o => new { o.StartTime, o.HoursCount })
-                .ToListAsync();
-
-            // Вычисляем время окончания новой брони
-            TimeOnly newEndTime = startTime.AddHours((double)hoursCount);
-
-            foreach (var existing in existingOrders)
-            {
-                // Вычисляем время окончания существующей брони
-                TimeOnly existingEndTime = existing.StartTime.AddHours((double)existing.HoursCount);
-
-                // Логика пересечения интервалов:
-                // Интервалы пересекаются, если НачалоА < КонецБ И НачалоБ < КонецА
-                bool isOverlapping = (startTime < existingEndTime) && (existing.StartTime < newEndTime);
-
-                if (isOverlapping)
-                {
-                    // Если интервалы пересекаются (включая случай полного совпадения 10:00 == 10:00)
-                    throw new AppException($"⛔ Конфликт времени! Зал уже забронирован с {existing.StartTime:hh\\:mm} до {existingEndTime:hh\\:mm}.");
-                }
-            }
-
-            // === ЕСЛИ КОНФЛИКТОВ НЕТ -> СОХРАНЯЕМ ===
-
-            using var transaction = await db.Database.BeginTransactionAsync();
+            // === НАЧАЛО ТРАНЗАКЦИИ ===
+            // Уровень изоляции Serializable защищает от одновременного бронирования
+            using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
             try
             {
+                // 2. Проверка существования зала и фотографа
                 var hall = await db.Halls.FindAsync(hallId);
                 if (hall == null) throw new AppException("Зал не найден.");
 
                 var photographer = await db.Photographers.FindAsync(photographerId);
                 if (photographer == null) throw new AppException("Фотограф не найден.");
 
+                // 3. ПРОВЕРКА КОНФЛИКТОВ ВРЕМЕНИ
+                var existingOrders = await db.Orders
+                    .Where(o => o.HallId == hallId &&
+                                o.BookingDate == bookingDate &&
+                                o.StatusId != 3) // 3 = Отменен
+                    .Select(o => new { o.StartTime, o.HoursCount })
+                    .ToListAsync();
+
+                foreach (var existing in existingOrders)
+                {
+                    // Каждая бронь блокирует зал минимум на 1 час
+                    int exStart = ToMinutes(existing.StartTime);
+                    int exEnd = exStart + GetBlockMinutes(existing.HoursCount);
+
+                    // Пересечение интервалов [start, end)
+                    bool isOverlapping = newStart < exEnd && exStart < newEnd;
+
+                    if (isOverlapping)
+                    {
+                        throw new AppException(
+                            $"⛔ Конфликт времени! Зал занят с {FormatMinutes(exStart)} до {FormatMinutes(exEnd)}. Пожалуйста, выберите другое время.");
+                    }
+                }
+
+                // 4. Создание заказа
                 var order = new Order
                 {
                     HallId = hallId,
@@ -80,13 +111,15 @@ namespace Photo.Services
                     UserId = userId,
                     BookingDate = bookingDate,
                     StartTime = startTime,
-                    HoursCount = hoursCount,
-                    StatusId = 1,
+                    HoursCount = hoursCount, // Записываем реальное время, которое выбрал пользователь
+                    StatusId = 1, // 1 - Подтвержден/Новый
                     CreatedAt = DateTime.Now
                 };
 
                 db.Orders.Add(order);
                 await db.SaveChangesAsync();
+
+                // 5. Подтверждение транзакции
                 await transaction.CommitAsync();
 
                 return order.OrderId;
